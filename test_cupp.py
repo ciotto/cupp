@@ -8,7 +8,12 @@ class TestCupp3(unittest.TestCase):
         read_config()
 
     def test_ftp_download(self):
-        pass
+        if not os.path.isdir('dictionaries'):
+            os.mkdir('dictionaries')
+
+        download_ftp_files('french', 'dico.gz')
+
+        self.assertTrue(os.path.isfile(os.path.join('dictionaries', 'french', 'dico.gz')))
 
     def test_parser(self):
         pass
