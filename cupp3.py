@@ -49,6 +49,7 @@ CONFIG = {}
 FTP_CONFIG = {}
 LEET_CONFIG = {}
 
+verbose = False
 
 def main():
     """Command-line interface to the cupp utility"""
@@ -56,6 +57,9 @@ def main():
     args = get_parser().parse_args()
 
     read_config()
+    global verbose
+    verbose = args.verbose
+
     if not args.quiet:
         print(COW_BANNER)
 
@@ -75,31 +79,31 @@ def colorize(msg, color):
     return u'\033[1;%sm%s\033[1;m' % (color, msg)
 
 
-def info(msg):
+def info(msg, symbol='[i]', color=33, file=None):
     a = msg.splitlines()
-    a[0] = u'%s %s' % (colorize('[+]', 33), a[0])
+    a[0] = u'%s %s' % (colorize(symbol, color), a[0])
 
     result = u'\n    '.join(a)
-    print(result)
+    print(result, file=file)
     return result
+
+
+def debug(msg):
+    if verbose:
+        return info(msg, '[v]')
+    return None
 
 
 def success(msg):
-    a = msg.splitlines()
-    a[0] = u'%s %s' % (colorize('[+]', 32), a[0])
+    return info(msg, '[+]', 32)
 
-    result = u'\n    '.join(a)
-    print(result)
-    return result
+
+def warning(msg):
+    return info(msg, '[!]', 33)
 
 
 def error(msg):
-    a = msg.splitlines()
-    a[0] = u'%s %s' % (colorize('[-]', 31), a[0])
-
-    result = u'\n    '.join(a)
-    print(result, file=sys.stderr)
-    return result
+    return info(msg, '[-]', 31, sys.stderr)
 
 
 def input_text(msg=None, default=None, validate=None, error_msg=None):
@@ -154,6 +158,8 @@ def get_parser():
     """Create and return a parser (argparse.ArgumentParser instance) for main()
     to use"""
     parser = argparse.ArgumentParser(description='Common User Passwords Profiler')
+    parser.add_argument('-V', '--verbose', action='store_true',
+                       help='Verbose output')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-i', '--interactive', action='store_true',
                        help='Interactive questions for user password profiling')

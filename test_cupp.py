@@ -2,6 +2,7 @@
 import types
 import unittest
 import input_mocker
+import cupp3
 from cupp3 import *
 
 
@@ -113,9 +114,15 @@ class TestCupp3(unittest.TestCase):
 
     def test_output_utilities(self):
         self.assertEqual(colorize('Message', 32), '\033[1;32mMessage\033[1;m')
-        self.assertEqual(info('Message'), '\033[1;33m[+]\033[1;m Message')
-        self.assertEqual(success('Message'), '\033[1;32m[+]\033[1;m Message')
-        self.assertEqual(error('Message'), '\033[1;31m[-]\033[1;m Message')
+
+        self.assertEqual(info('Message\nmessage'), '\033[1;33m[i]\033[1;m Message\n    message')
+        cupp3.verbose = True
+        self.assertEqual(debug('Message\nmessage'), '\033[1;33m[v]\033[1;m Message\n    message')
+        cupp3.verbose = False
+        self.assertIsNone(debug('Message\nmessage'))
+        self.assertEqual(success('Message\nmessage'), '\033[1;32m[+]\033[1;m Message\n    message')
+        self.assertEqual(warning('Message\nmessage'), '\033[1;33m[!]\033[1;m Message\n    message')
+        self.assertEqual(error('Message\nmessage'), '\033[1;31m[-]\033[1;m Message\n    message')
 
 
 if __name__ == '__main__':
