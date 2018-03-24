@@ -88,5 +88,13 @@ class TestCupp3(unittest.TestCase):
             ['foo0', 'foo1', 'bar0', 'bar1', ]
         )
 
+    def test_komb(self):
+        result = komb(['foo', 'bar'], ['qwe', 'asd'])
+        self.assertEqual(type(result), types.GeneratorType)
+        self.assertEqual(
+            list(result),
+            ['fooqwe', 'fooasd', 'barqwe', 'barasd', ]
+        )
+
 if __name__ == '__main__':
     unittest.main()
