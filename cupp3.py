@@ -62,6 +62,37 @@ def main():
 
 
 # Separate into a function for testing purposes
+def colorize(msg, color):
+    return u'\033[1;%sm%s\033[1;m' % (color, msg)
+
+
+def info(msg):
+    a = msg.splitlines()
+    a[0] = u'%s %s' % (colorize('[+]', 33), a[0])
+
+    result = u'\n    '.join(a)
+    print(result)
+    return result
+
+
+def success(msg):
+    a = msg.splitlines()
+    a[0] = u'%s %s' % (colorize('[+]', 32), a[0])
+
+    result = u'\n    '.join(a)
+    print(result)
+    return result
+
+
+def error(msg):
+    a = msg.splitlines()
+    a[0] = u'%s %s' % (colorize('[-]', 31), a[0])
+
+    result = u'\n    '.join(a)
+    print(result, file=sys.stderr)
+    return result
+
+
 def get_parser():
     """Create and return a parser (argparse.ArgumentParser instance) for main()
     to use"""

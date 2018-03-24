@@ -106,6 +106,12 @@ class TestCupp3(unittest.TestCase):
             '4bcd3f9h1jklmn0pqr57uvwxy2ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
         )
 
+    def test_output_utilities(self):
+        self.assertEqual(colorize('Message', 32), '\033[1;32mMessage\033[1;m')
+        self.assertEqual(info('Message'), '\033[1;33m[+]\033[1;m Message')
+        self.assertEqual(success('Message'), '\033[1;32m[+]\033[1;m Message')
+        self.assertEqual(error('Message'), '\033[1;31m[-]\033[1;m Message')
+
 
 if __name__ == '__main__':
     unittest.main()
