@@ -4,8 +4,8 @@ init:
 	pip install -r requirements_dev.txt
 
 test:
-	coverage run -m unittest -v
+	coverage run -m unittest discover -v
 	coverage report
 
 travis:
-	coverage run -m unittest -v
+	coverage run -m unittest discover -v
