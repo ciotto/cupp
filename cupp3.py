@@ -7,19 +7,29 @@
 #
 #  See 'docs/LICENSE' and 'docs/README' for more information.
 """Common User Passwords Profiler"""
+
+from __future__ import print_function
+
 __author__ = 'Muris Kurgas'
 __license__ = 'GPL'
 __version__ = '3.1.0-alpha'
 
+import re
 import argparse
-import configparser
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import ConfigParser
 import csv
 import ftplib
 import functools
 import gzip
 import os
 import sys
-from urllib.request import urlopen
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib import urlopen
 
 try:
     import readline
@@ -34,11 +44,11 @@ COW_BANNER = """ ___________
            \033[1;31m(__)    )\\ \033[1;m
            \033[1;31m   ||--|| \033[1;m\033[05m*\033[25m\033[1;m   Muris Kurgas <j0rgan@remote-exploit.org>
 
-
 """
 CONFIG = {}
 FTP_CONFIG = {}
 LEET_CONFIG = {}
+
 
 def main():
     """Command-line interface to the cupp utility"""
@@ -180,7 +190,7 @@ def read_config(filename='cupp.cfg'):
     #global CONFIG, FTP_CONFIG, LEET_CONFIG
 
     # Reading configuration file
-    config = configparser.ConfigParser()
+    config = ConfigParser()
     config.read(filename)
 
     CONFIG.update({
@@ -214,60 +224,66 @@ def read_config(filename='cupp.cfg'):
 def interactive():
     """Implementation of the -i switch. Interactively question the user and
     create a password dictionary file based on the answer."""
-    print()
-    print("[+] Insert the information about the victim to make a dictionary")
-    print("[+] If you don't know all the info, just hit enter when asked! ;)\n")
+    info("Insert the information about the victim to make a dictionary")
+    info("If you don't know all the info, just hit enter when asked! ;)\n")
 
     # We need some information first!
 
-    name = input("First Name: ").lower().strip()
-    while not name:
-        print("\n[-] You must enter a name at least!", file=sys.stderr)
-        name = input("Name: ").lower().strip()
+    name = input_text(
+        'First Name: ',
+        error_msg='You must enter a name at least!',
+        validate='^.+$'
+    ).lower().strip()
 
-    surname = input("Surname: ").lower()
-    nick = input("Nickname: ").lower()
-    birthdate = input("Birthdate (DDMMYYYY): ").strip()
-    while len(birthdate) not in (0, 8):
-        print("\n[-] You must enter 8 digits for birthday!", file=sys.stderr)
-        birthdate = input("Birthdate (DDMMYYYY): ").strip()
-
-    print("\n")
-
-    wife = input("Partner's name: ").lower()
-    wifen = input("Partner's nickname: ").lower()
-    wifeb = input("Partner's birthdate (DDMMYYYY): ").strip()
-    while len(wifeb) not in (0, 8):
-        print("\n[-] You must enter 8 digits for birthday!", file=sys.stderr)
-        wifeb = input("Partner's birthdate (DDMMYYYY): ").strip()
+    surname = input_text("Surname: ").lower().strip()
+    nick = input_text("Nickname: ").lower().strip()
+    birthdate = input_text(
+        "Birthdate (DDMMYYYY): ",
+        error_msg='You must enter 8 digits for birthday!',
+        validate='^$|^[0-3][0-9][0-1][0-9][0-9]{4}$'
+    ).strip()
 
     print("\n")
 
-    kid = input("Child's name: ").lower()
-    kidn = input("Child's nickname: ").lower()
-    kidb = input("Child's birthdate (DDMMYYYY): ").strip()
-    while len(kidb) not in (0, 8):
-        print("\n[-] You must enter 8 digits for birthday!", file=sys.stderr)
-        kidb = input("Child's birthdate (DDMMYYYY): ").strip()
+    wife = input_text("Partner's name: ").lower().strip()
+    wifen = input_text("Partner's nickname: ").lower().strip()
+    wifeb = input_text(
+        "Partner's birthdate (DDMMYYYY): ",
+        error_msg='You must enter 8 digits for birthday!',
+        validate='^$|^[0-3][0-9][0-1][0-9][0-9]{4}$'
+    ).strip()
 
     print("\n")
 
-    pet = input("Pet's name: ").lower().strip()
-    company = input("Company name: ").lower().strip()
+    kid = input_text("Child's name: ").lower().strip()
+    kidn = input_text("Child's nickname: ").lower().strip()
+    kidb = input_text(
+        "Child's birthdate (DDMMYYYY): ",
+        error_msg='You must enter 8 digits for birthday!',
+        validate='^$|^[0-3][0-9][0-1][0-9][0-9]{4}$'
+    ).strip()
+
     print("\n")
 
-    prompt = "Do you want to add some key words about the victim? Y/[N]: "
-    words1 = input(prompt).lower().strip()
-    words2 = ''
+    pet = input_text("Pet's name: ").lower().strip()
+    company = input_text("Company name: ").lower().strip()
+    print("\n")
+
+    words1 = input_text(
+        "Do you want to add some key words about the victim? Y/[N]: ",
+        validate='^$|^[yYnN]$'
+    ).lower().strip()
+    words = []
     if words1 == 'y':
-        prompt = ("Please enter the words, comma-separated."
-                  " [i.e. hacker,juice,black], spaces will be removed: ")
-        words2 = input(prompt).replace(' ', '')
-    words = words2.split(',')
+        words = input_text(
+            "Please enter the words, comma-separated. [i.e. hacker,juice,black], spaces will be removed: ",
+            validate='^[\w \w,]+$'
+        ).replace(' ', '').split(',')
+        words = list(filter(None, set(words)))
 
     spechars = []
     prompt = "Do you want to add special characters at the end of words? Y/[N]: "
-    spechars1 = input(prompt).lower()
+    spechars1 = input_text(prompt).lower()
     if spechars1 == "y":
         for spec1 in CONFIG['chars']:
             spechars.append(spec1)
@@ -276,8 +292,8 @@ def interactive():
                 for spec3 in CONFIG['chars']:
                     spechars.append(spec1+spec2+spec3)
 
-    randnum = input("Do you want to add some random numbers at the end of words? Y/[N]: ").lower()
-    leetmode = input("Leet mode? (i.e. leet = 1337) Y/[N]: ").lower().strip()
+    randnum = input_text("Do you want to add some random numbers at the end of words? Y/[N]: ").lower()
+    leetmode = input_text("Leet mode? (i.e. leet = 1337) Y/[N]: ").lower().strip()
 
 
     print("\n[+] Now making a dictionary...")
@@ -456,7 +472,7 @@ def interactive():
         komb005 = list(komb(word, spechars))
         komb006 = list(komb(reverse, spechars))
 
-    print("[+] Sorting list and removing duplicates...")
+    info("Sorting list and removing duplicates...")
 
     sets = [set(komb1), set(komb2), set(komb3), set(komb4), set(komb5),
             set(komb6), set(komb7), set(komb8), set(komb9), set(komb10),
@@ -483,17 +499,14 @@ def interactive():
     unique_list_finished = [x for x in unique_list if CONFIG['wcfrom'] < len(x) < CONFIG['wcto']]
     unique_list_finished.sort()
 
-    with open(name + '.txt', 'w') as f:
+    file_name = '%s.txt' % name
+    with open(file_name, 'w') as f:
         f.write(os.linesep.join(unique_list_finished))
-    with open(name + '.txt') as f:
-        lines = len(list(f)) # shorter, but possibly more memory expensive
+    # with open(file_name) as f:
+    #     lines = len(list(f)) # shorter, but possibly more memory expensive
 
-    message = ("[+] Saving dictionary to \033[1;31m%s.txt\033[1;m, counting"
-               " \033[1;31m%i\033[1;m words.")
-    print(message % (name, lines))
-    message = ("[+] Now load your pistolero with \033[1;31m%s.txt\033[1;m and"
-               " shoot! Good luck!")
-    print(message % name)
+    info("Saving dictionary to %s counting %s words." % (colorize(file_name, 31), colorize(unique_list_finished, 31)))
+    success("Now load your pistolero with %s and shoot! Good luck!" % colorize(file_name, 31))
     sys.exit()
 
 
@@ -555,84 +568,84 @@ def download_wordlist():
     print("\n  Files will be downloaded from %s repository" % FTP_CONFIG['name'])
     print("\n  Tip: After downloading wordlist, you can improve it with -w option\n")
 
-    option = input("Enter number: ")
+    option = input_text("Enter number: ")
     while not option.isdigit() or int(option) > 38:
-        print("\n[-] Invalid choice.", file=sys.stderr)
-        option = input("Enter number: ")
+        error("Invalid choice.")
+        option = input_text("Enter number: ")
 
     option = int(option)
 
     if option == 38:
-        print('[-] Leaving.', file=sys.stderr)
+        error('Leaving.')
         sys.exit()
 
     # integer indexed dict to maintain consistency with the menu shown to the
     # user. plus, easy to inadvertently unorder things up with lists
     arguments = { # the first items of the tuples are the ftp directories.
                   # Do Not Change.
-        1: ('Moby', 'mhyph.tar.gz', 'mlang.tar.gz', 'moby.tar.gz',
-            'mpos.tar.gz', 'mpron.tar.gz', 'mthes.tar.gz', 'mwords.tar.gz'),
-        2: ('afrikaans', 'afr_dbf.zip'),
-        3: ('american', 'dic-0294.tar.gz'),
-        4: ('aussie', 'oz.gz'),
-        5: ('chinese', 'chinese.gz'),
-        6: ('computer', 'Domains.gz', 'Dosref.gz', 'Ftpsites.gz', 'Jargon.gz',
-            'common-passwords.txt.gz', 'etc-hosts.gz', 'foldoc.gz',
-            'language-list.gz', 'unix.gz'),
-        7: ('croatian', 'croatian.gz'),
-        8: ('czech', 'czech-wordlist-ascii-cstug-novak.gz'),
-        9: ('danish', 'danish.words.gz', 'dansk.zip'),
-        10: ('databases', 'acronyms.gz', 'att800.gz',
-             'computer-companies.gz', 'world_heritage.gz'),
-        11: ('dictionaries', 'Antworth.gz', 'CRL.words.gz', 'Roget.words.gz',
-             'Unabr.dict.gz', 'Unix.dict.gz', 'englex-dict.gz',
-             'knuth_britsh.gz', 'knuth_words.gz', 'pocket-dic.gz',
-             'shakesp-glossary.gz', 'special.eng.gz', 'words-english.gz'),
-        12: ('dutch', 'words.dutch.gz'),
-        13: ('finnish', 'finnish.gz', 'firstnames.finnish.gz', 'words.finnish.FAQ.gz'),
-        14: ('french', 'dico.gz'),
-        15: ('german', 'deutsch.dic.gz', 'germanl.gz', 'words.german.gz'),
-        16: ('hindi', 'hindu-names.gz'),
-        17: ('hungarian', 'hungarian.gz'),
-        18: ('italian', 'words.italian.gz'),
-        19: ('japanese', 'words.japanese.gz'),
-        20: ('latin', 'wordlist.aug.gz'),
-        21: ('literature', 'LCarrol.gz', 'Paradise.Lost.gz', 'aeneid.gz',
-             'arthur.gz', 'cartoon.gz', 'cartoons-olivier.gz', 'charlemagne.gz',
-             'fable.gz', 'iliad.gz', 'myths-legends.gz', 'odyssey.gz', 'sf.gz',
-             'shakespeare.gz', 'tolkien.words.gz'),
-        22: ('movieTV', 'Movies.gz', 'Python.gz', 'Trek.gz'),
-        23: ('music', 'music-classical.gz', 'music-country.gz', 'music-jazz.gz',
-             'music-other.gz', 'music-rock.gz', 'music-shows.gz',
-             'rock-groups.gz'),
-        24: ('names', 'ASSurnames.gz' 'Congress.gz', 'Family-Names.gz',
-             'Given-Names.gz', 'actor-givenname.gz', 'actor-surname.gz',
-             'cis-givenname.gz', 'cis-surname.gz', 'crl-names.gz', 'famous.gz',
-             'fast-names.gz', 'female-names-kantr.gz', 'female-names.gz',
-             'givennames-ol.gz', 'male-names.gz', 'movie-characters.gz',
-             'names.french.gz', 'names.hp.gz', 'other-names.gz',
-             'shakesp-names.gz', 'surnames-ol.gz', 'surnames.finnish.gz',
-             'usenet-names.gz'),
-        25: ('net', 'hosts-txt.gz', 'inet-machines.gz', 'usenet-loginids.gz',
-             'usenet-machines.gz', 'uunet-sites.gz'),
-        26: ('norwegian', 'words.norwegian.gz'),
-        27: ('places', 'Colleges.gz', 'US-counties.gz', 'World.factbook.gz',
-             'Zipcodes.gz', 'places.gz'),
-        28: ('polish', 'words.polish.gz'),
-        29: ('random', 'Ethnologue.gz', 'abbr.gz', 'chars.gz', 'dogs.gz',
-             'drugs.gz', 'junk.gz', 'numbers.gz', 'phrases.gz', 'sports.gz',
-             'statistics.gz'),
-        30: ('religion', 'Koran.gz', 'kjbible.gz', 'norse.gz'),
-        31: ('russian', 'russian.lst.gz', 'russian_words.koi8.gz'),
-        32: ('science', 'Acr-diagnosis.gz', 'Algae.gz', 'Bacteria.gz',
-             'Fungi.gz', 'Microalgae.gz', 'Viruses.gz', 'asteroids.gz',
-             'biology.gz', 'tech.gz'),
-        33: ('spanish', 'words.spanish.gz'),
-        34: ('swahili', 'swahili.gz'),
-        35: ('swedish', 'words.swedish.gz'),
-        36: ('turkish', 'turkish.dict.gz'),
-        37: ('yiddish', 'yiddish.gz'),
-    }
+                  1: ('Moby', 'mhyph.tar.gz', 'mlang.tar.gz', 'moby.tar.gz',
+                      'mpos.tar.gz', 'mpron.tar.gz', 'mthes.tar.gz', 'mwords.tar.gz'),
+                  2: ('afrikaans', 'afr_dbf.zip'),
+                  3: ('american', 'dic-0294.tar.gz'),
+                  4: ('aussie', 'oz.gz'),
+                  5: ('chinese', 'chinese.gz'),
+                  6: ('computer', 'Domains.gz', 'Dosref.gz', 'Ftpsites.gz', 'Jargon.gz',
+                      'common-passwords.txt.gz', 'etc-hosts.gz', 'foldoc.gz',
+                      'language-list.gz', 'unix.gz'),
+                  7: ('croatian', 'croatian.gz'),
+                  8: ('czech', 'czech-wordlist-ascii-cstug-novak.gz'),
+                  9: ('danish', 'danish.words.gz', 'dansk.zip'),
+                  10: ('databases', 'acronyms.gz', 'att800.gz',
+                       'computer-companies.gz', 'world_heritage.gz'),
+                  11: ('dictionaries', 'Antworth.gz', 'CRL.words.gz', 'Roget.words.gz',
+                       'Unabr.dict.gz', 'Unix.dict.gz', 'englex-dict.gz',
+                       'knuth_britsh.gz', 'knuth_words.gz', 'pocket-dic.gz',
+                       'shakesp-glossary.gz', 'special.eng.gz', 'words-english.gz'),
+                  12: ('dutch', 'words.dutch.gz'),
+                  13: ('finnish', 'finnish.gz', 'firstnames.finnish.gz', 'words.finnish.FAQ.gz'),
+                  14: ('french', 'dico.gz'),
+                  15: ('german', 'deutsch.dic.gz', 'germanl.gz', 'words.german.gz'),
+                  16: ('hindi', 'hindu-names.gz'),
+                  17: ('hungarian', 'hungarian.gz'),
+                  18: ('italian', 'words.italian.gz'),
+                  19: ('japanese', 'words.japanese.gz'),
+                  20: ('latin', 'wordlist.aug.gz'),
+                  21: ('literature', 'LCarrol.gz', 'Paradise.Lost.gz', 'aeneid.gz',
+                       'arthur.gz', 'cartoon.gz', 'cartoons-olivier.gz', 'charlemagne.gz',
+                       'fable.gz', 'iliad.gz', 'myths-legends.gz', 'odyssey.gz', 'sf.gz',
+                       'shakespeare.gz', 'tolkien.words.gz'),
+                  22: ('movieTV', 'Movies.gz', 'Python.gz', 'Trek.gz'),
+                  23: ('music', 'music-classical.gz', 'music-country.gz', 'music-jazz.gz',
+                       'music-other.gz', 'music-rock.gz', 'music-shows.gz',
+                       'rock-groups.gz'),
+                  24: ('names', 'ASSurnames.gz' 'Congress.gz', 'Family-Names.gz',
+                       'Given-Names.gz', 'actor-givenname.gz', 'actor-surname.gz',
+                       'cis-givenname.gz', 'cis-surname.gz', 'crl-names.gz', 'famous.gz',
+                       'fast-names.gz', 'female-names-kantr.gz', 'female-names.gz',
+                       'givennames-ol.gz', 'male-names.gz', 'movie-characters.gz',
+                       'names.french.gz', 'names.hp.gz', 'other-names.gz',
+                       'shakesp-names.gz', 'surnames-ol.gz', 'surnames.finnish.gz',
+                       'usenet-names.gz'),
+                  25: ('net', 'hosts-txt.gz', 'inet-machines.gz', 'usenet-loginids.gz',
+                       'usenet-machines.gz', 'uunet-sites.gz'),
+                  26: ('norwegian', 'words.norwegian.gz'),
+                  27: ('places', 'Colleges.gz', 'US-counties.gz', 'World.factbook.gz',
+                       'Zipcodes.gz', 'places.gz'),
+                  28: ('polish', 'words.polish.gz'),
+                  29: ('random', 'Ethnologue.gz', 'abbr.gz', 'chars.gz', 'dogs.gz',
+                       'drugs.gz', 'junk.gz', 'numbers.gz', 'phrases.gz', 'sports.gz',
+                       'statistics.gz'),
+                  30: ('religion', 'Koran.gz', 'kjbible.gz', 'norse.gz'),
+                  31: ('russian', 'russian.lst.gz', 'russian_words.koi8.gz'),
+                  32: ('science', 'Acr-diagnosis.gz', 'Algae.gz', 'Bacteria.gz',
+                       'Fungi.gz', 'Microalgae.gz', 'Viruses.gz', 'asteroids.gz',
+                       'biology.gz', 'tech.gz'),
+                  33: ('spanish', 'words.spanish.gz'),
+                  34: ('swahili', 'swahili.gz'),
+                  35: ('swedish', 'words.swedish.gz'),
+                  36: ('turkish', 'turkish.dict.gz'),
+                  37: ('yiddish', 'yiddish.gz'),
+                  }
 
     download_ftp_files(*(arguments[option]))
 
@@ -643,9 +656,9 @@ def alectodb_download():
     url = CONFIG['alectourl']
     local_file_name = url.split('/')[-1]
 
-    print("\n[+] Checking if alectodb is not present...")
+    info("Checking if alectodb is not present...")
     if not os.path.isfile('alectodb.csv.gz'):
-        print("[+] Downloading alectodb.csv.gz...")
+        info("Downloading alectodb.csv.gz...")
         web_file = urlopen(url)
         local_file = open(local_file_name, 'w')
         local_file.write(web_file.read())
@@ -665,13 +678,13 @@ def alectodb_download():
     gpa = sorted(set(passwords))
     f.close()
 
-    print("\n[+] Exporting to alectodb-usernames.txt and alectodb-passwords.txt")
+    info("Exporting to alectodb-usernames.txt and alectodb-passwords.txt")
     with open('alectodb-usernames.txt', 'w') as usernames_file:
         usernames_file.write(os.linesep.join(gus))
 
     with open('alectodb-passwords.txt', 'w') as passwords_file:
         passwords_file.write(os.linesep.join(gpa))
-    print("[+] Done.")
+    success("Done.")
 
 
 def concats(seq, start, stop):
@@ -686,6 +699,7 @@ def komb(seq, start):
     for mystr in seq:
         for mystr1 in start:
             yield mystr + mystr1
+
 
 def leet_replace(s):
     """Replace all instances of a character in a string with their 1337
@@ -714,12 +728,12 @@ def improve_dictionary(filename):
     print("      *************************************************\n")
 
     prompt = "Do you want to concatenate all words from wordlist? Y/[N]: "
-    conts = input(prompt).lower().strip()
+    conts = input_text(prompt).lower().strip()
 
     if conts == 'y' and linije > CONFIG['threshold']:
         print("\n[-] Maximum number of words for concatenation is %i" % CONFIG['threshold'])
         print("[-] Check configuration file for increasing this number.\n")
-        conts = input(prompt).lower().strip()
+        conts = input_text(prompt).lower().strip()
     cont = []
     if conts == 'y':
         for cont1 in listica:
@@ -729,7 +743,7 @@ def improve_dictionary(filename):
 
     spechars = []
     prompt = "Do you want to add special chars at the end of words? Y/[N]: "
-    spechars1 = input(prompt).lower()
+    spechars1 = input_text(prompt).lower()
     if spechars1 == "y":
         for spec1 in CONFIG['chars']:
             spechars.append(spec1)
@@ -739,8 +753,8 @@ def improve_dictionary(filename):
                     spechars.append(spec1+spec2+spec3)
 
     prompt = "Do you want to add some random numbers at the end of words? Y/[N]: "
-    randnum = input(prompt).lower().strip()
-    leetmode = input("Leet mode? (i.e. leet = 1337) Y/[N]: ").lower().strip()
+    randnum = input_text(prompt).lower().strip()
+    leetmode = input_text("Leet mode? (i.e. leet = 1337) Y/[N]: ").lower().strip()
 
 
     kombinacija1 = list(komb(listica, CONFIG['years']))
