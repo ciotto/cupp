@@ -550,7 +550,7 @@ def download_wordlist():
     menu = """
      1   Moby            14      french          27      places
      2   afrikaans       15      german          28      polish
-     3   american        16      hindi           39      random
+     3   american        16      hindi           29      random
      4   aussie          17      hungarian       30      religion
      5   chinese         18      italian         31      russian
      6   computer        19      japanese        32      science
