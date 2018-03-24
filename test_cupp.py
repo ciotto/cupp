@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import types
 import unittest
 from cupp3 import *
 
@@ -80,6 +80,13 @@ class TestCupp3(unittest.TestCase):
         self.assertTrue(args.quiet)
         self.assertTrue(args.version)
 
+    def test_concats(self):
+        result = concats(['foo', 'bar'], 0, 2)
+        self.assertEqual(type(result), types.GeneratorType)
+        self.assertEqual(
+            list(result),
+            ['foo0', 'foo1', 'bar0', 'bar1', ]
+        )
 
 if __name__ == '__main__':
     unittest.main()
