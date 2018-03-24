@@ -1,2 +1,3 @@
 -r requirements.txt
 coverage==4.5.1
+input-mocker==0.1.2

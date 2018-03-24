@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 import types
 import unittest
+import input_mocker
 from cupp3 import *
 
 
 class TestCupp3(unittest.TestCase):
     def setUp(self):
         read_config()
+
+    @input_mocker.patch()
+    def test_input(self):
+        self.assertEqual(input_text(), 'y')
 
     def test_ftp_download(self):
         if not os.path.isdir('dictionaries'):

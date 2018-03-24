@@ -61,7 +61,6 @@ def main():
         improve_dictionary(args.improve)
 
 
-# Separate into a function for testing purposes
 def colorize(msg, color):
     return u'\033[1;%sm%s\033[1;m' % (color, msg)
 
@@ -93,6 +92,54 @@ def error(msg):
     return result
 
 
+def input_text(msg=None, default=None, validate=None, error_msg=None):
+    def _i():
+        if sys.version_info.major >= 3:
+            return input(msg)
+        return raw_input(msg)
+
+    # This code is based on fabric.operations.prompt
+    value = None
+    while value is None:
+        # Get input
+        value = _i()
+        # Handle validation
+        if validate:
+            # Callable
+            if callable(validate):
+                # Callable validate() must raise an exception if validation
+                # fails.
+                try:
+                    value = validate(value)
+                except Exception as e:
+                    # Reset value so we stay in the loop
+                    value = None
+                    if error_msg:
+                        error(error_msg)
+                    else:
+                        error('Invalid input:\n%s' % e.message)
+            # String / regex must match and will be empty if validation fails.
+            else:
+                # Need to transform regex into full-matching one if it's not.
+                if not validate.startswith('^'):
+                    validate = r'^' + validate
+                if not validate.endswith('$'):
+                    validate += r'$'
+                result = re.findall(validate, value)
+                if not result:
+                    if error_msg:
+                        error(error_msg)
+                    else:
+                        error("Invalid input:\n'%s' does not match '%s'" % (value, validate))
+                    # Reset value so we stay in the loop
+                    value = None
+
+    if not value and default:
+        return default
+    return value
+
+
+# Separate into a function for testing must enter a name at lurposes
 def get_parser():
     """Create and return a parser (argparse.ArgumentParser instance) for main()
     to use"""
