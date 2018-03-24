@@ -96,5 +96,16 @@ class TestCupp3(unittest.TestCase):
             ['fooqwe', 'fooasd', 'barqwe', 'barasd', ]
         )
 
+    def test_leet_replace(self):
+        result = leet_replace('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+                              'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+
+        self.assertEqual(
+            result,
+            '4bcd3f9h1jklmn0pqr57uvwxy2ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+            '4bcd3f9h1jklmn0pqr57uvwxy2ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        )
+
+
 if __name__ == '__main__':
     unittest.main()
