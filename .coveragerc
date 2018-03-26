@@ -1,5 +1,5 @@
 [run]
-omit = test_*
+omit = test_*, .virtualenv*
 
 # see <https://lautaportti.wordpress.com/2011/05/07/test-coverage-analysis/>
 branch = True
