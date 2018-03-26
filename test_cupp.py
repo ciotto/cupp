@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+import tempfile
 import types
 import unittest
+from mock import patch
 import input_mocker
+from shutil import copyfile
 import cupp3
 from cupp3 import *
 
@@ -16,6 +19,7 @@ class CuppMocker:
         self.ftp_config = cupp3.FTP_CONFIG
         self.leet_config = cupp3.LEET_CONFIG
         self.verbose = cupp3.verbose
+        self.cupp_dir = cupp3.cupp_dir
 
         if self.reset:
             # Reset values
@@ -29,6 +33,7 @@ class CuppMocker:
         cupp3.FTP_CONFIG = self.ftp_config
         cupp3.LEET_CONFIG = self.leet_config
         cupp3.verbose = self.verbose
+        cupp3.cupp_dir = self.cupp_dir
 
 
 class TestCupp3(unittest.TestCase):
@@ -52,26 +57,136 @@ class TestCupp3(unittest.TestCase):
         self.assertNotEqual(cupp3.FTP_CONFIG, {})
         self.assertNotEqual(cupp3.LEET_CONFIG, {})
         self.assertEqual(cupp3.verbose, False)
+        self.assertNotEqual(cupp3.cupp_dir, '/foo')
 
         with CuppMocker(True):
             self.assertEqual(cupp3.CONFIG, {})
             self.assertEqual(cupp3.FTP_CONFIG, {})
             self.assertEqual(cupp3.LEET_CONFIG, {})
             self.assertEqual(cupp3.verbose, False)
+            self.assertNotEqual(cupp3.cupp_dir, '/foo')
 
             cupp3.CONFIG = {'foo': 'bar'}
             cupp3.FTP_CONFIG = {'foo': 'bar'}
             cupp3.LEET_CONFIG = {'foo': 'bar'}
             cupp3.verbose = True
+            cupp3.cupp_dir = '/foo'
 
             self.assertEqual(cupp3.CONFIG, {'foo': 'bar'})
             self.assertEqual(cupp3.FTP_CONFIG, {'foo': 'bar'})
             self.assertEqual(cupp3.LEET_CONFIG, {'foo': 'bar'})
             self.assertEqual(cupp3.verbose, True)
+            self.assertEqual(cupp3.cupp_dir, '/foo')
         self.assertNotEqual(cupp3.CONFIG, {})
         self.assertNotEqual(cupp3.FTP_CONFIG, {})
         self.assertNotEqual(cupp3.LEET_CONFIG, {})
         self.assertEqual(cupp3.verbose, False)
+        self.assertNotEqual(cupp3.cupp_dir, '/foo')
+
+    def test_read_config(self):
+        # Create temp conf file
+        tempfile.gettempdir()
+        tempfile_path = os.path.join(tempfile.tempdir, 'cupp.cfg')
+        cwdfile_path = os.path.join(os.getcwd(), 'cupp.cfg')
+        copyfile('cupp.cfg', tempfile_path)
+
+        config = {
+            'alectourl': 'http://www.helith.net/projects/alecto/alectodb.csv.gz',
+            'chars': ['!', '@', "'#'", '$', '%', '&', '*'],
+            'numfrom': 0,
+            'numto': 100,
+            'threshold': 200,
+            'wcfrom': 5,
+            'wcto': 12,
+            'years': [
+                '2008',
+                '2009',
+                '2010',
+                '2011',
+                '2012',
+                '2013',
+                '2014',
+                '2015',
+                '2016',
+            ]
+        }
+        ftp_config = {
+            'name': 'FUNET',
+            'password': 'cupp3',
+            'path': '/pub/unix/security/passwd/crack/dictionaries/',
+            'url': 'ftp.funet.fi',
+            'user': 'anonymous',
+        }
+        leet_config = {
+            'a': '4',
+            'e': '3',
+            'g': '9',
+            'i': '1',
+            'o': '0',
+            's': '5',
+            't': '7',
+            'z': '2',
+        }
+
+        # 1. -> test passing parameter override other paths
+        with CuppMocker(True):
+            result = read_config(tempfile_path)
+            self.assertEqual(result, tempfile_path)
+
+            self.assertEqual(cupp3.CONFIG, config)
+            self.assertEqual(cupp3.FTP_CONFIG, ftp_config)
+            self.assertEqual(cupp3.LEET_CONFIG, leet_config)
+
+        # 2. -> if not exist use cwd version
+        with CuppMocker(True):
+            cupp3.cupp_dir = '/foo/bar'
+
+            result = read_config()
+            self.assertEqual(result, cwdfile_path)
+
+            self.assertEqual(cupp3.CONFIG, config)
+            self.assertEqual(cupp3.FTP_CONFIG, ftp_config)
+            self.assertEqual(cupp3.LEET_CONFIG, leet_config)
+
+        # 3. -> if exist together use cwd version
+        with CuppMocker(True):
+            cupp3.cupp_dir = tempfile.tempdir
+
+            result = read_config()
+            self.assertEqual(result, cwdfile_path)
+
+        # 4. -> if not exist cwd version use cupp dir version
+        with CuppMocker(True):
+            with patch('os.getcwd') as getcwd_mock:
+                getcwd_mock.return_value = '/foo/bar'
+                cupp3.cupp_dir = tempfile.tempdir
+
+                result = read_config()
+                self.assertEqual(result, tempfile_path)
+
+                self.assertEqual(cupp3.CONFIG, config)
+                self.assertEqual(cupp3.FTP_CONFIG, ftp_config)
+                self.assertEqual(cupp3.LEET_CONFIG, leet_config)
+
+        # 5. -> if CUPP_CFG env variable is set use that
+        with CuppMocker(True):
+            with patch.dict('os.environ', {'CUPP_CFG': tempfile_path}):
+                result = read_config()
+                self.assertEqual(result, tempfile_path)
+
+                self.assertEqual(cupp3.CONFIG, config)
+                self.assertEqual(cupp3.FTP_CONFIG, ftp_config)
+                self.assertEqual(cupp3.LEET_CONFIG, leet_config)
+
+        # 6. -> if CUPP_CFG env variable is set and passing parameter use parameter
+        with CuppMocker(True):
+            with patch.dict('os.environ', {'CUPP_CFG': cwdfile_path}):
+                result = read_config(tempfile_path)
+                self.assertEqual(result, tempfile_path)
+
+                self.assertEqual(cupp3.CONFIG, config)
+                self.assertEqual(cupp3.FTP_CONFIG, ftp_config)
+                self.assertEqual(cupp3.LEET_CONFIG, leet_config)
 
     def test_ftp_download(self):
         if not os.path.isdir('dictionaries'):
@@ -95,9 +210,21 @@ class TestCupp3(unittest.TestCase):
         with self.assertRaises(SystemExit):
             parser.parse_args(['-i', '-l'])
 
+        args = parser.parse_args(['-i', '-c', 'foo/bar.cfg'])
+        self.assertEqual(args.config, 'foo/bar.cfg')
+        args = parser.parse_args(['-l', '--config', 'bar/foo.cfg'])
+        self.assertEqual(args.config, 'bar/foo.cfg')
+        self.assertFalse(args.alecto)
+        self.assertTrue(args.download_wordlist)
+        self.assertFalse(args.improve)
+        self.assertFalse(args.interactive)
+        self.assertFalse(args.quiet)
+        self.assertFalse(args.version)
+
         args = parser.parse_args(['-a'])
         self.assertFalse(args.quiet)
         args = parser.parse_args(['-a', '--quiet'])
+        self.assertIsNone(args.config)
         self.assertTrue(args.alecto)
         self.assertFalse(args.download_wordlist)
         self.assertFalse(args.improve)
@@ -108,6 +235,7 @@ class TestCupp3(unittest.TestCase):
         args = parser.parse_args(['-l'])
         self.assertFalse(args.quiet)
         args = parser.parse_args(['-l', '-q'])
+        self.assertIsNone(args.config)
         self.assertFalse(args.alecto)
         self.assertTrue(args.download_wordlist)
         self.assertFalse(args.improve)
@@ -118,9 +246,10 @@ class TestCupp3(unittest.TestCase):
         args = parser.parse_args(['-a'])
         self.assertFalse(args.quiet)
         args = parser.parse_args(['-w', 'dictionary.txt', '--quiet'])
+        self.assertIsNone(args.config)
         self.assertFalse(args.alecto)
         self.assertFalse(args.download_wordlist)
-        self.assertTrue(args.improve)
+        self.assertEqual(args.improve, 'dictionary.txt')
         self.assertFalse(args.interactive)
         self.assertTrue(args.quiet)
         self.assertFalse(args.version)
@@ -128,6 +257,7 @@ class TestCupp3(unittest.TestCase):
         args = parser.parse_args(['-i'])
         self.assertFalse(args.quiet)
         args = parser.parse_args(['--interactive', '-q'])
+        self.assertIsNone(args.config)
         self.assertFalse(args.alecto)
         self.assertFalse(args.download_wordlist)
         self.assertFalse(args.improve)
@@ -138,6 +268,7 @@ class TestCupp3(unittest.TestCase):
         args = parser.parse_args(['--version'])
         self.assertFalse(args.quiet)
         args = parser.parse_args(['-v', '--quiet'])
+        self.assertIsNone(args.config)
         self.assertFalse(args.alecto)
         self.assertFalse(args.download_wordlist)
         self.assertFalse(args.improve)

@@ -16,10 +16,7 @@ __version__ = '3.1.0-alpha'
 
 import re
 import argparse
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
+from configparser import ConfigParser
 import csv
 import ftplib
 import functools
@@ -50,18 +47,21 @@ FTP_CONFIG = {}
 LEET_CONFIG = {}
 
 verbose = False
+cupp_dir = os.path.dirname(os.path.realpath(__file__))
+
 
 def main():
     """Command-line interface to the cupp utility"""
 
     args = get_parser().parse_args()
 
-    read_config()
     global verbose
     verbose = args.verbose
 
     if not args.quiet:
         print(COW_BANNER)
+
+    read_config(args.config)
 
     if args.version:
         version()
@@ -160,6 +160,8 @@ def get_parser():
     parser = argparse.ArgumentParser(description='Common User Passwords Profiler')
     parser.add_argument('-V', '--verbose', action='store_true',
                        help='Verbose output')
+    parser.add_argument('-c', '--config', metavar='FILENAME',
+                       help='Use this option to use specific config file', default=None)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-i', '--interactive', action='store_true',
                        help='Interactive questions for user password profiling')
@@ -190,14 +192,38 @@ def version():
     sys.exit()
 
 
-def read_config(filename='cupp.cfg'):
+def read_config(file_path=None):
     """Read the given configuration file and update global variables to reflect
     changes (CONFIG, FTP_CONFIG, LEET_CONFIG)."""
     #global CONFIG, FTP_CONFIG, LEET_CONFIG
 
+    config_files = [
+        os.path.join(os.getcwd(), 'cupp.cfg'),
+        os.path.join(cupp_dir, 'cupp.cfg'),
+    ]
+
+    if not file_path:
+        if 'CUPP_CFG' in os.environ:
+            file_path = os.environ['CUPP_CFG']
+        else:
+            for f in config_files:
+                if os.path.isfile(f):
+                    file_path = f
+                    break
+                debug('Config file %s does not exist' % f)
+
+            if not file_path:
+                error('Config file not found')
+                exit(1)
+
+    if not os.path.isfile(file_path):
+        error('Config file %s does not exist' % file_path)
+        exit(1)
+    debug('use %s config file' % file_path)
+
     # Reading configuration file
     config = ConfigParser()
-    config.read(filename)
+    config.read(file_path)
 
     CONFIG.update({
         'years':     config.get('years', 'years').split(','),
@@ -225,6 +251,8 @@ def read_config(filename='cupp.cfg'):
                            path=ftp_config('ftppath'),
                            user=ftp_config('ftpuser'),
                            password=ftp_config('ftppass')))
+
+    return file_path
 
 
 def interactive():
