@@ -533,14 +533,14 @@ def interactive():
     unique_list_finished = [x for x in unique_list if CONFIG['wcfrom'] < len(x) < CONFIG['wcto']]
     unique_list_finished.sort()
 
-    file_name = '%s.txt' % name
-    with open(file_name, 'w') as f:
+    file_path = '%s.txt' % name
+    with open(file_path, 'w') as f:
         f.write(os.linesep.join(unique_list_finished))
-    # with open(file_name) as f:
+    # with open(file_path) as f:
     #     lines = len(list(f)) # shorter, but possibly more memory expensive
 
-    info("Saving dictionary to %s counting %s words." % (colorize(file_name, 31), colorize(unique_list_finished, 31)))
-    success("Now load your pistolero with %s and shoot! Good luck!" % colorize(file_name, 31))
+    info("Saving dictionary to %s counting %s words." % (colorize(file_path, 31), colorize(len(unique_list_finished), 31)))
+    success("Now load your pistolero with %s and shoot! Good luck!" % colorize(file_path, 31))
     sys.exit()
 
 
@@ -834,12 +834,12 @@ def improve_dictionary(filename):
     with open(filename+'.cupp.txt', 'w') as f:
         f.write(os.linesep.join(unique_list_finished))
 
-    with open(filename+'.cupp.txt') as f:
-        lines = len(list(f))
+    # with open(filename+'.cupp.txt') as f:
+    #     lines = len(list(f))
 
     message = ("[+] Saving dictionary to \033[1;31m%s.cupp.txt\033[1;m, counting"
                " \033[1;31m%i words.\033[1;m")
-    print(message % (filename, lines))
+    print(message % (filename, len(unique_list_finished)))
     message = ("[+] Now load your pistolero with \033[1;31m%s.cupp.txt\033[1;m"
                " and shoot! Good luck!")
     print(message % filename)
