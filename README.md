@@ -1,5 +1,8 @@
 # cupp.py - Common User Passwords Profiler
 
+[![Build Status](https://travis-ci.org/ciotto/cupp.svg?branch=dev)](https://travis-ci.org/ciotto/cupp)
+[![Codecov](https://codecov.io/gh/ciotto/cupp/branch/dev/graph/badge.svg)](https://codecov.io/gh/ciotto/cupp)
+[![PEP8](https://img.shields.io/badge/code%20style-pep8-orange.svg)](https://www.python.org/dev/peps/pep-0008/)
  
 ## About
 
