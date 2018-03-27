@@ -200,17 +200,21 @@ class TestCupp3(unittest.TestCase):
 
     def test_parser(self):
         parser = get_parser()
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(SystemExit) as c:
             parser.parse_args([])
+        self.assertEqual(c.exception.code, 2)
 
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(SystemExit) as c:
             parser.parse_args(['-i', '-v'])
+        self.assertEqual(c.exception.code, 2)
 
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(SystemExit) as c:
             parser.parse_args(['-i', '-a'])
+        self.assertEqual(c.exception.code, 2)
 
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(SystemExit) as c:
             parser.parse_args(['-i', '-l'])
+        self.assertEqual(c.exception.code, 2)
 
         args = parser.parse_args(['-i', '-c', 'foo/bar.cfg'])
         self.assertEqual(args.config, 'foo/bar.cfg')
