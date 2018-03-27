@@ -108,6 +108,8 @@ class TestCupp3(unittest.TestCase):
                 '2014',
                 '2015',
                 '2016',
+                '2017',
+                '2018',
             ]
         }
         ftp_config = {
