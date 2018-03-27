@@ -48,6 +48,11 @@ class TestCupp3(unittest.TestCase):
     def tearDown(self):
         self.mocker.__exit__()
 
+    def assertFileEqual(self, path1, path2):
+        with open(path1, 'r') as f1:
+            with open(path2, 'r') as f2:
+                self.assertEqual(f1.read(), f2.read())
+
     @input_mocker.patch()
     def test_input(self):
         self.assertEqual(input_text(), 'y')
@@ -319,6 +324,65 @@ class TestCupp3(unittest.TestCase):
         self.assertEqual(success('Message\nmessage'), '\033[1;32m[+]\033[1;m Message\n    message')
         self.assertEqual(warning('Message\nmessage'), '\033[1;33m[!]\033[1;m Message\n    message')
         self.assertEqual(error('Message\nmessage'), '\033[1;31m[-]\033[1;m Message\n    message')
+
+    def test_interactive(self):
+        # 1. -> name only
+        inputs = ['foo'] + (['']*15)
+        with input_mocker.InputMocker(inputs):
+            with self.assertRaises(SystemExit) as c:
+                interactive()
+            self.assertIsNone(c.exception.code)
+
+            self.assertFileEqual('foo.txt', 'tests/test_01.txt')
+
+        # 2. -> all user data
+        inputs = ['foo', 'bar', 'qwe', '12101990'] + (['']*12)
+        with input_mocker.InputMocker(inputs):
+            with self.assertRaises(SystemExit) as c:
+                interactive()
+            self.assertIsNone(c.exception.code)
+
+            self.assertFileEqual('foo.txt', 'tests/test_02.txt')
+
+        # 3. -> user data and partner data
+        inputs = ['foo', 'bar', 'qwe', '12101990', 'rty', 'asd', '05121990'] + (['']*9)
+        with input_mocker.InputMocker(inputs):
+            with self.assertRaises(SystemExit) as c:
+                interactive()
+            self.assertIsNone(c.exception.code)
+
+            self.assertFileEqual('foo.txt', 'tests/test_03.txt')
+
+        # 4. -> user data, partner data and child name
+        inputs = ['foo', 'bar', 'qwe', '12101990', 'rty', 'asd', '05121990', 'fgh', 'zxc', '23042000'] + (['']*6)
+        with input_mocker.InputMocker(inputs):
+            with self.assertRaises(SystemExit) as c:
+                interactive()
+            self.assertIsNone(c.exception.code)
+
+            self.assertFileEqual('foo.txt', 'tests/test_04.txt')
+
+        # 5. -> all data
+        inputs = [
+            'foo', 'bar', 'qwe', '12101990', 'rty', 'asd', '05121990', 'fgh', 'zxc', '23042000', 'vbn', 'jkl'
+        ] + (['']*4)
+        with input_mocker.InputMocker(inputs):
+            with self.assertRaises(SystemExit) as c:
+                interactive()
+            self.assertIsNone(c.exception.code)
+
+            self.assertFileEqual('foo.txt', 'tests/test_05.txt')
+
+        # 6. -> all data and all options
+        inputs = [
+            'foo', 'bar', 'qwe', '12101990', 'rty', 'asd', '05121990', 'fgh', 'zxc', '23042000', 'vbn', 'jkl'
+        ] + (['y']*5)
+        with input_mocker.InputMocker(inputs):
+            with self.assertRaises(SystemExit) as c:
+                interactive()
+            self.assertIsNone(c.exception.code)
+
+            self.assertFileEqual('foo.txt', 'tests/test_06.txt')
 
 
 if __name__ == '__main__':

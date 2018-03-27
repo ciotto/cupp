@@ -106,4 +106,5 @@ ENV/
 *.iml
 
 # Other
-dictionaries/
+/dictionaries/
+/*.txt
