@@ -459,6 +459,14 @@ class TestCupp3(unittest.TestCase):
 
             self.assertFileEqual('tests/improve.txt.cupp.txt', 'tests/improve_02.txt')
 
+        # 5. -> all options yes
+        with input_mocker.InputMocker(['n', 'y', 'y', 'y']):
+            with self.assertRaises(SystemExit) as c:
+                improve_dictionary('tests/improve.txt')
+            self.assertIsNone(c.exception.code)
+
+            self.assertFileEqual('tests/improve.txt.cupp.txt', 'tests/improve_03.txt')
+
 
 if __name__ == '__main__':
     unittest.main()
