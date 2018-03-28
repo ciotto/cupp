@@ -15,9 +15,9 @@ class CuppMocker:
 
     def __enter__(self):
         # Save values
-        self.config = cupp3.CONFIG
-        self.ftp_config = cupp3.FTP_CONFIG
-        self.leet_config = cupp3.LEET_CONFIG
+        self.config = dict(cupp3.CONFIG)
+        self.ftp_config = dict(cupp3.FTP_CONFIG)
+        self.leet_config = dict(cupp3.LEET_CONFIG)
         self.verbose = cupp3.verbose
         self.cupp_dir = cupp3.cupp_dir
 
@@ -333,7 +333,7 @@ class TestCupp3(unittest.TestCase):
                 interactive()
             self.assertIsNone(c.exception.code)
 
-            self.assertFileEqual('foo.txt', 'tests/test_01.txt')
+            self.assertFileEqual('foo.txt', 'tests/interactive_01.txt')
 
         # 2. -> all user data
         inputs = ['foo', 'bar', 'qwe', '12101990'] + (['']*12)
@@ -342,7 +342,7 @@ class TestCupp3(unittest.TestCase):
                 interactive()
             self.assertIsNone(c.exception.code)
 
-            self.assertFileEqual('foo.txt', 'tests/test_02.txt')
+            self.assertFileEqual('foo.txt', 'tests/interactive_02.txt')
 
         # 3. -> user data and partner data
         inputs = ['foo', 'bar', 'qwe', '12101990', 'rty', 'asd', '05121990'] + (['']*9)
@@ -351,7 +351,7 @@ class TestCupp3(unittest.TestCase):
                 interactive()
             self.assertIsNone(c.exception.code)
 
-            self.assertFileEqual('foo.txt', 'tests/test_03.txt')
+            self.assertFileEqual('foo.txt', 'tests/interactive_03.txt')
 
         # 4. -> user data, partner data and child name
         inputs = ['foo', 'bar', 'qwe', '12101990', 'rty', 'asd', '05121990', 'fgh', 'zxc', '23042000'] + (['']*6)
@@ -360,7 +360,7 @@ class TestCupp3(unittest.TestCase):
                 interactive()
             self.assertIsNone(c.exception.code)
 
-            self.assertFileEqual('foo.txt', 'tests/test_04.txt')
+            self.assertFileEqual('foo.txt', 'tests/interactive_04.txt')
 
         # 5. -> all data
         inputs = [
@@ -371,7 +371,7 @@ class TestCupp3(unittest.TestCase):
                 interactive()
             self.assertIsNone(c.exception.code)
 
-            self.assertFileEqual('foo.txt', 'tests/test_05.txt')
+            self.assertFileEqual('foo.txt', 'tests/interactive_05.txt')
 
         # 6. -> all data and all options
         inputs = [
@@ -382,7 +382,38 @@ class TestCupp3(unittest.TestCase):
                 interactive()
             self.assertIsNone(c.exception.code)
 
-            self.assertFileEqual('foo.txt', 'tests/test_06.txt')
+            self.assertFileEqual('foo.txt', 'tests/interactive_06.txt')
+
+    def test_improve_dictionary(self):
+        # 1. -> invalid file
+        with input_mocker.InputMocker(['']):
+            with self.assertRaises(SystemExit) as c:
+                improve_dictionary('tests/fake.txt')
+            self.assertEqual(c.exception.code, 1)
+
+        # 2. -> invalid file
+        with CuppMocker():
+            cupp3.CONFIG['threshold'] = True
+            with input_mocker.InputMocker(['y']):
+                with self.assertRaises(SystemExit) as c:
+                    improve_dictionary('tests/improve.txt')
+                self.assertEqual(c.exception.code, 1)
+
+        # 3. -> all options default
+        with input_mocker.InputMocker(['']):
+            with self.assertRaises(SystemExit) as c:
+                improve_dictionary('tests/improve.txt')
+            self.assertIsNone(c.exception.code)
+
+            self.assertFileEqual('tests/improve.txt.cupp.txt', 'tests/improve_01.txt')
+
+        # 4. -> all options yes
+        with input_mocker.InputMocker(['y']):
+            with self.assertRaises(SystemExit) as c:
+                improve_dictionary('tests/improve.txt')
+            self.assertIsNone(c.exception.code)
+
+            self.assertFileEqual('tests/improve.txt.cupp.txt', 'tests/improve_02.txt')
 
 
 if __name__ == '__main__':

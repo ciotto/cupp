@@ -106,6 +106,12 @@ def error(msg):
     return info(msg, '[-]', 31, sys.stderr)
 
 
+def final_message(file_path, dictionary):
+    info("Saving dictionary to %s counting %s words." % (colorize(file_path, 31), colorize(len(dictionary), 31)))
+    success("Now load your pistolero with %s and shoot! Good luck!" % colorize(file_path, 31))
+    sys.exit()
+
+
 def input_text(msg=None, default=None, validate=None, error_msg=None):
     def _i():
         if sys.version_info.major >= 3:
@@ -301,6 +307,7 @@ def interactive():
 
     pet = input_text("Pet's name: ").lower().strip()
     company = input_text("Company name: ").lower().strip()
+
     print("\n")
 
     words1 = input_text(
@@ -329,8 +336,7 @@ def interactive():
     randnum = input_text("Do you want to add some random numbers at the end of words? Y/[N]: ").lower()
     leetmode = input_text("Leet mode? (i.e. leet = 1337) Y/[N]: ").lower().strip()
 
-
-    print("\n[+] Now making a dictionary...")
+    info("Now making a dictionary...")
 
     # Now me must do some string modifications
 
@@ -536,12 +542,8 @@ def interactive():
     file_path = '%s.txt' % name
     with open(file_path, 'w') as f:
         f.write(os.linesep.join(unique_list_finished))
-    # with open(file_path) as f:
-    #     lines = len(list(f)) # shorter, but possibly more memory expensive
 
-    info("Saving dictionary to %s counting %s words." % (colorize(file_path, 31), colorize(len(unique_list_finished), 31)))
-    success("Now load your pistolero with %s and shoot! Good luck!" % colorize(file_path, 31))
-    sys.exit()
+    final_message(file_path, unique_list_finished)
 
 
 def download_ftp_files(ftp_dir, *filenames):
@@ -550,7 +552,6 @@ def download_ftp_files(ftp_dir, *filenames):
 
     print("\n[+] connecting...\n")
     ftp = ftplib.FTP(FTP_CONFIG['url'], FTP_CONFIG['user'], FTP_CONFIG['password'])
-    #ftp.login(FTP_CONFIG['user'], FTP_CONFIG['password'])
     ftp.cwd(FTP_CONFIG['path'])
     ftp.cwd(ftp_dir)
     dir_prefix = 'dictionaries/%s/' % ftp_dir
@@ -746,6 +747,10 @@ def leet_replace(s):
 def improve_dictionary(filename):
     """Implementation of the -w option. Improve a dictionary by
     interactively questioning the user."""
+    if not os.path.isfile(filename):
+        error('File %s does not exist' % filename)
+        exit(1)
+
     with open(filename) as fajl:
         listic = fajl.readlines()
     linije = len(listic)
@@ -754,20 +759,23 @@ def improve_dictionary(filename):
     for x in listic:
         listica.extend(x.split())
 
-    print()
     print("      *************************************************")
-    print("      *                    \033[1;31mWARNING!!!\033[1;m                 *")
+    print("      *                    %s                 *" % colorize('WARNING!!!', 31))
     print("      *         Using large wordlists in some         *")
     print("      *       options bellow is NOT recommended!      *")
     print("      *************************************************\n")
 
-    prompt = "Do you want to concatenate all words from wordlist? Y/[N]: "
-    conts = input_text(prompt).lower().strip()
+    conts = input_text(
+        "Do you want to concatenate all words from wordlist? Y/[N]: ",
+        validate='^$|^[yYnN]$'
+    ).lower().strip()
 
     if conts == 'y' and linije > CONFIG['threshold']:
-        print("\n[-] Maximum number of words for concatenation is %i" % CONFIG['threshold'])
-        print("[-] Check configuration file for increasing this number.\n")
-        conts = input_text(prompt).lower().strip()
+        error(
+            "Maximum number of words for concatenation is %i\n"
+            "Check configuration file for increasing this number." % CONFIG['threshold']
+        )
+        sys.exit(1)
     cont = []
     if conts == 'y':
         for cont1 in listica:
@@ -776,8 +784,10 @@ def improve_dictionary(filename):
                     cont.append(cont1+cont2)
 
     spechars = []
-    prompt = "Do you want to add special chars at the end of words? Y/[N]: "
-    spechars1 = input_text(prompt).lower()
+    spechars1 = input_text(
+        "Do you want to add special chars at the end of words? Y/[N]: ",
+        validate='^$|^[yYnN]$'
+    ).lower()
     if spechars1 == "y":
         for spec1 in CONFIG['chars']:
             spechars.append(spec1)
@@ -786,9 +796,14 @@ def improve_dictionary(filename):
                 for spec3 in CONFIG['chars']:
                     spechars.append(spec1+spec2+spec3)
 
-    prompt = "Do you want to add some random numbers at the end of words? Y/[N]: "
-    randnum = input_text(prompt).lower().strip()
-    leetmode = input_text("Leet mode? (i.e. leet = 1337) Y/[N]: ").lower().strip()
+    randnum = input_text(
+        "Do you want to add some random numbers at the end of words? Y/[N]: ",
+        validate='^$|^[yYnN]$'
+    ).lower().strip()
+    leetmode = input_text(
+        "Leet mode? (i.e. leet = 1337) Y/[N]: ",
+        validate='^$|^[yYnN]$'
+    ).lower().strip()
 
 
     kombinacija1 = list(komb(listica, CONFIG['years']))
@@ -808,9 +823,8 @@ def improve_dictionary(filename):
         if conts == "y":
             kombinacija6 = list(concats(cont, CONFIG['numfrom'], CONFIG['numto']))
 
-    print("\n[+] Now making a dictionary...")
-
-    print("[+] Sorting list and removing duplicates...")
+    info("Now making a dictionary...")
+    info("Sorting list and removing duplicates...")
 
     sets = [set(kombinacija1), set(kombinacija2), set(kombinacija3),
             set(kombinacija4), set(kombinacija5), set(kombinacija6),
@@ -831,19 +845,11 @@ def improve_dictionary(filename):
     unique_list_finished = [x for x in unique_list if CONFIG['wcfrom'] < len(x) < CONFIG['wcto']]
     unique_list_finished.sort()
 
-    with open(filename+'.cupp.txt', 'w') as f:
+    file_path = filename + '.cupp.txt'
+    with open(file_path, 'w') as f:
         f.write(os.linesep.join(unique_list_finished))
 
-    # with open(filename+'.cupp.txt') as f:
-    #     lines = len(list(f))
-
-    message = ("[+] Saving dictionary to \033[1;31m%s.cupp.txt\033[1;m, counting"
-               " \033[1;31m%i words.\033[1;m")
-    print(message % (filename, len(unique_list_finished)))
-    message = ("[+] Now load your pistolero with \033[1;31m%s.cupp.txt\033[1;m"
-               " and shoot! Good luck!")
-    print(message % filename)
-
+    final_message(file_path, unique_list_finished)
 
 if __name__ == '__main__':
     main()

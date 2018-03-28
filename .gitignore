@@ -108,3 +108,4 @@ ENV/
 # Other
 /dictionaries/
 /*.txt
+/tests/*.cupp.txt
