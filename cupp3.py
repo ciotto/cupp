@@ -187,7 +187,7 @@ def get_parser():
 
 def version():
     """Display version and exit."""
-    print("\n \033[1;31m[ cupp.py ]  v3.1.0-alpha\033[1;m\n")
+    print(" %s  %s\n" % (colorize('[ cupp.py ]', 32), colorize(__version__, 31)))
     print(" * Hacked up by j0rgan - j0rgan@remote-exploit.org")
     print(" * http://www.remote-exploit.org\n")
     print(" Take a look ./README.md file for more info about the program\n")

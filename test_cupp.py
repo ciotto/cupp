@@ -325,6 +325,11 @@ class TestCupp3(unittest.TestCase):
         self.assertEqual(warning('Message\nmessage'), '\033[1;33m[!]\033[1;m Message\n    message')
         self.assertEqual(error('Message\nmessage'), '\033[1;31m[-]\033[1;m Message\n    message')
 
+    def test_version(self):
+        with self.assertRaises(SystemExit) as c:
+            version()
+        self.assertIsNone(c.exception.code)
+
     def test_interactive(self):
         # 1. -> name only
         inputs = ['foo'] + (['']*15)
