@@ -28,10 +28,6 @@ try:
 except ImportError:
     from urllib import urlopen
 
-try:
-    import readline
-except ImportError:
-    pass
 
 COW_BANNER = """ ___________
  \033[07m  cupp.py! \033[27m                # Common
