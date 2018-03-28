@@ -195,6 +195,21 @@ class TestCupp3(unittest.TestCase):
                 self.assertEqual(cupp3.FTP_CONFIG, ftp_config)
                 self.assertEqual(cupp3.LEET_CONFIG, leet_config)
 
+        # 7. -> config file not found
+        with CuppMocker(True):
+            with patch('os.getcwd') as getcwd_mock:
+                getcwd_mock.return_value = '/foo/bar'
+                cupp3.cupp_dir = '/foo/bar'
+
+                with self.assertRaises(SystemExit) as c:
+                    read_config()
+                self.assertEqual(c.exception.code, 1)
+
+        # 8. -> config file does not exist
+        with self.assertRaises(SystemExit) as c:
+            read_config('foo/bar.cfg')
+        self.assertEqual(c.exception.code, 1)
+
     def test_ftp_download(self):
         if not os.path.isdir('dictionaries'):
             os.mkdir('dictionaries')
