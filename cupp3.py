@@ -197,7 +197,6 @@ def version():
 def read_config(file_path=None):
     """Read the given configuration file and update global variables to reflect
     changes (CONFIG, FTP_CONFIG, LEET_CONFIG)."""
-    #global CONFIG, FTP_CONFIG, LEET_CONFIG
 
     config_files = [
         os.path.join(os.getcwd(), 'cupp.cfg'),
@@ -359,7 +358,6 @@ def interactive():
     kidb_dd = kidb[:2]
     kidb_mm = kidb[2:4]
 
-
     # Convert first letters to uppercase...
     nameup = name.title()
     surnameup = surname.title()
@@ -407,7 +405,6 @@ def interactive():
                                  bds.index(bds1) != bds.index(bds3))
                     if condition:
                         bdss.append(bds1+bds2+bds3)
-
 
     # For a woman...
     wbds = [wifeb_yy, wifeb_yyy, wifeb_yyyy, wifeb_xd, wifeb_xm, wifeb_dd, wifeb_mm]
@@ -474,7 +471,6 @@ def interactive():
                          kombinak.index(kombina1.title()) != kombinak.index(kombina2.title()))
             if condition:
                 kombinaak.append(kombina1+kombina2)
-
 
     komb1 = list(komb(kombinaa, bdss))
     komb2 = list(komb(kombinaaw, wbdss))
@@ -556,7 +552,7 @@ def download_ftp_files(ftp_dir, *filenames):
         os.mkdir(dir_prefix)
 
     def handle_download(target, block):
-        "Callback for retrbinary. Prints a progress bar as well."
+        """Callback for retrbinary. Prints a progress bar as well."""
         target.write(block)
         print('.', end=' ')
 
@@ -719,14 +715,14 @@ def alectodb_download():
 
 
 def concats(seq, start, stop):
-    "Helper function for concatenations."
+    """Helper function for concatenations."""
     for s in seq:
         for num in range(start, stop):
             yield s + str(num)
 
 
 def komb(seq, start):
-    "Helper function for sorting and making combinations."
+    """Helper function for sorting and making combinations."""
     for mystr in seq:
         for mystr1 in start:
             yield mystr + mystr1
