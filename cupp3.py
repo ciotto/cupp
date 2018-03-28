@@ -133,7 +133,10 @@ def input_text(msg=None, default=None, validate=None, error_msg=None):
                     if error_msg:
                         error(error_msg)
                     else:
-                        error('Invalid input:\n%s' % e.message)
+                        msg = e
+                        if hasattr(e, 'message'):
+                            msg = e.message
+                        error('Invalid input:\n%s' % msg)
             # String / regex must match and will be empty if validation fails.
             else:
                 # Need to transform regex into full-matching one if it's not.

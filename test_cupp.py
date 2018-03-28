@@ -53,9 +53,33 @@ class TestCupp3(unittest.TestCase):
             with open(path2, 'r') as f2:
                 self.assertEqual(f1.read(), f2.read())
 
-    @input_mocker.patch()
+    @input_mocker.patch(['y', 'd', 'n'])
     def test_input(self):
         self.assertEqual(input_text(), 'y')
+        self.assertEqual(input_text(), 'd')
+        self.assertEqual(input_text(), 'n')
+
+        self.assertEqual(input_text(validate='^[yYnN]$'), 'y')
+        self.assertEqual(input_text(validate='^[yYnN]$'), 'n')
+
+        self.assertEqual(input_text(validate='[yYnN]'), 'y')
+        self.assertEqual(input_text(validate='[yYnN]'), 'n')
+
+        self.assertEqual(input_text(validate='[yYnN]', error_msg='Error'), 'y')
+        self.assertEqual(input_text(validate='[yYnN]', error_msg='Error'), 'n')
+
+        def _v(v):
+            if v == 'd':
+                raise IOError('Message')
+            return v
+        self.assertEqual(input_text(validate=_v), 'y')
+        self.assertEqual(input_text(validate=_v), 'n')
+
+        self.assertEqual(input_text(validate=_v, error_msg='Error'), 'y')
+        self.assertEqual(input_text(validate=_v, error_msg='Error'), 'n')
+
+        with input_mocker.InputMocker(['']):
+            self.assertEqual(input_text(validate='', default='n'), 'n')
 
     def test_cupp_mocker(self):
         self.assertNotEqual(cupp3.CONFIG, {})
