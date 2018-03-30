@@ -467,6 +467,25 @@ class TestCupp3(unittest.TestCase):
 
             self.assertFileEqual('tests/improve.txt.cupp.txt', 'tests/improve_03.txt')
 
+    @input_mocker.patch(['0', '-1', '39', '1', '37', '38'])
+    def test_download_wordlist(self):
+        def _mock(*a):
+            def _download_ftp_files(*args):
+                self.assertEqual(args, a)
+            return _download_ftp_files
+
+        with patch('cupp3.download_ftp_files', _mock(
+                'Moby', 'mhyph.tar.gz', 'mlang.tar.gz', 'moby.tar.gz',
+                'mpos.tar.gz', 'mpron.tar.gz', 'mthes.tar.gz', 'mwords.tar.gz')):
+            download_wordlist()
+
+        with patch('cupp3.download_ftp_files', _mock('yiddish', 'yiddish.gz')):
+            download_wordlist()
+
+        with self.assertRaises(SystemExit) as c:
+            download_wordlist()
+        self.assertIsNone(c.exception.code)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -545,7 +545,7 @@ def download_ftp_files(ftp_dir, *filenames):
     """Helper function for download_wordlist(). Download the given files from
     the ftp directory."""
 
-    print("\n[+] connecting...\n")
+    info("connecting...\n")
     ftp = ftplib.FTP(FTP_CONFIG['url'], FTP_CONFIG['user'], FTP_CONFIG['password'])
     ftp.cwd(FTP_CONFIG['path'])
     ftp.cwd(ftp_dir)
@@ -561,12 +561,12 @@ def download_ftp_files(ftp_dir, *filenames):
 
     for filename in filenames:
         with open(dir_prefix + filename, 'wb') as outfile:
-            print("\n[+] downloading %s..." % filename)
+            info("downloading %s..." % filename)
             callback = functools.partial(handle_download, outfile)
             ftp.retrbinary('RETR %s' % filename, callback)
         print(' done.')
 
-    print('[+] file(s) saved to %s' % dir_prefix)
+    success('file(s) saved to %s' % dir_prefix)
     ftp.quit()
 
 
@@ -577,105 +577,105 @@ def download_wordlist():
     if not os.path.isdir('dictionaries'):
         os.mkdir('dictionaries')
 
-    menu = """
-     1   Moby            14      french          27      places
-     2   afrikaans       15      german          28      polish
-     3   american        16      hindi           29      random
-     4   aussie          17      hungarian       30      religion
-     5   chinese         18      italian         31      russian
-     6   computer        19      japanese        32      science
-     7   croatian        20      latin           33      spanish
-     8   czech           21      literature      34      swahili
-     9   danish          22      movieTV         35      swedish
-    10   databases       23      music           36      turkish
-    11   dictionaries    24      names           37      yiddish
-    12   dutch           25      net             38      exit program
-    13   finnish         26      norwegian
-
-    """
-    print("\n  Choose the section you want to download:\n")
-    print(menu)
-    print("\n  Files will be downloaded from %s repository" % FTP_CONFIG['name'])
-    print("\n  Tip: After downloading wordlist, you can improve it with -w option\n")
-
-    option = input_text("Enter number: ")
-    while not option.isdigit() or int(option) > 38:
-        error("Invalid choice.")
-        option = input_text("Enter number: ")
-
-    option = int(option)
-
-    if option == 38:
-        error('Leaving.')
-        sys.exit()
-
     # integer indexed dict to maintain consistency with the menu shown to the
     # user. plus, easy to inadvertently unorder things up with lists
-    arguments = { # the first items of the tuples are the ftp directories.
-                  # Do Not Change.
-                  1: ('Moby', 'mhyph.tar.gz', 'mlang.tar.gz', 'moby.tar.gz',
-                      'mpos.tar.gz', 'mpron.tar.gz', 'mthes.tar.gz', 'mwords.tar.gz'),
-                  2: ('afrikaans', 'afr_dbf.zip'),
-                  3: ('american', 'dic-0294.tar.gz'),
-                  4: ('aussie', 'oz.gz'),
-                  5: ('chinese', 'chinese.gz'),
-                  6: ('computer', 'Domains.gz', 'Dosref.gz', 'Ftpsites.gz', 'Jargon.gz',
-                      'common-passwords.txt.gz', 'etc-hosts.gz', 'foldoc.gz',
-                      'language-list.gz', 'unix.gz'),
-                  7: ('croatian', 'croatian.gz'),
-                  8: ('czech', 'czech-wordlist-ascii-cstug-novak.gz'),
-                  9: ('danish', 'danish.words.gz', 'dansk.zip'),
-                  10: ('databases', 'acronyms.gz', 'att800.gz',
-                       'computer-companies.gz', 'world_heritage.gz'),
-                  11: ('dictionaries', 'Antworth.gz', 'CRL.words.gz', 'Roget.words.gz',
-                       'Unabr.dict.gz', 'Unix.dict.gz', 'englex-dict.gz',
-                       'knuth_britsh.gz', 'knuth_words.gz', 'pocket-dic.gz',
-                       'shakesp-glossary.gz', 'special.eng.gz', 'words-english.gz'),
-                  12: ('dutch', 'words.dutch.gz'),
-                  13: ('finnish', 'finnish.gz', 'firstnames.finnish.gz', 'words.finnish.FAQ.gz'),
-                  14: ('french', 'dico.gz'),
-                  15: ('german', 'deutsch.dic.gz', 'germanl.gz', 'words.german.gz'),
-                  16: ('hindi', 'hindu-names.gz'),
-                  17: ('hungarian', 'hungarian.gz'),
-                  18: ('italian', 'words.italian.gz'),
-                  19: ('japanese', 'words.japanese.gz'),
-                  20: ('latin', 'wordlist.aug.gz'),
-                  21: ('literature', 'LCarrol.gz', 'Paradise.Lost.gz', 'aeneid.gz',
-                       'arthur.gz', 'cartoon.gz', 'cartoons-olivier.gz', 'charlemagne.gz',
-                       'fable.gz', 'iliad.gz', 'myths-legends.gz', 'odyssey.gz', 'sf.gz',
-                       'shakespeare.gz', 'tolkien.words.gz'),
-                  22: ('movieTV', 'Movies.gz', 'Python.gz', 'Trek.gz'),
-                  23: ('music', 'music-classical.gz', 'music-country.gz', 'music-jazz.gz',
-                       'music-other.gz', 'music-rock.gz', 'music-shows.gz',
-                       'rock-groups.gz'),
-                  24: ('names', 'ASSurnames.gz' 'Congress.gz', 'Family-Names.gz',
-                       'Given-Names.gz', 'actor-givenname.gz', 'actor-surname.gz',
-                       'cis-givenname.gz', 'cis-surname.gz', 'crl-names.gz', 'famous.gz',
-                       'fast-names.gz', 'female-names-kantr.gz', 'female-names.gz',
-                       'givennames-ol.gz', 'male-names.gz', 'movie-characters.gz',
-                       'names.french.gz', 'names.hp.gz', 'other-names.gz',
-                       'shakesp-names.gz', 'surnames-ol.gz', 'surnames.finnish.gz',
-                       'usenet-names.gz'),
-                  25: ('net', 'hosts-txt.gz', 'inet-machines.gz', 'usenet-loginids.gz',
-                       'usenet-machines.gz', 'uunet-sites.gz'),
-                  26: ('norwegian', 'words.norwegian.gz'),
-                  27: ('places', 'Colleges.gz', 'US-counties.gz', 'World.factbook.gz',
-                       'Zipcodes.gz', 'places.gz'),
-                  28: ('polish', 'words.polish.gz'),
-                  29: ('random', 'Ethnologue.gz', 'abbr.gz', 'chars.gz', 'dogs.gz',
-                       'drugs.gz', 'junk.gz', 'numbers.gz', 'phrases.gz', 'sports.gz',
-                       'statistics.gz'),
-                  30: ('religion', 'Koran.gz', 'kjbible.gz', 'norse.gz'),
-                  31: ('russian', 'russian.lst.gz', 'russian_words.koi8.gz'),
-                  32: ('science', 'Acr-diagnosis.gz', 'Algae.gz', 'Bacteria.gz',
-                       'Fungi.gz', 'Microalgae.gz', 'Viruses.gz', 'asteroids.gz',
-                       'biology.gz', 'tech.gz'),
-                  33: ('spanish', 'words.spanish.gz'),
-                  34: ('swahili', 'swahili.gz'),
-                  35: ('swedish', 'words.swedish.gz'),
-                  36: ('turkish', 'turkish.dict.gz'),
-                  37: ('yiddish', 'yiddish.gz'),
-                  }
+    arguments = [
+        # the first items of the tuples are the ftp directories.
+        # Do Not Change.
+        ('Moby', 'mhyph.tar.gz', 'mlang.tar.gz', 'moby.tar.gz',
+         'mpos.tar.gz', 'mpron.tar.gz', 'mthes.tar.gz', 'mwords.tar.gz'),
+        ('afrikaans', 'afr_dbf.zip'),
+        ('american', 'dic-0294.tar.gz'),
+        ('aussie', 'oz.gz'),
+        ('chinese', 'chinese.gz'),
+        ('computer', 'Domains.gz', 'Dosref.gz', 'Ftpsites.gz', 'Jargon.gz',
+         'common-passwords.txt.gz', 'etc-hosts.gz', 'foldoc.gz',
+         'language-list.gz', 'unix.gz'),
+        ('croatian', 'croatian.gz'),
+        ('czech', 'czech-wordlist-ascii-cstug-novak.gz'),
+        ('danish', 'danish.words.gz', 'dansk.zip'),
+        ('databases', 'acronyms.gz', 'att800.gz',
+         'computer-companies.gz', 'world_heritage.gz'),
+        ('dictionaries', 'Antworth.gz', 'CRL.words.gz', 'Roget.words.gz',
+         'Unabr.dict.gz', 'Unix.dict.gz', 'englex-dict.gz',
+         'knuth_britsh.gz', 'knuth_words.gz', 'pocket-dic.gz',
+         'shakesp-glossary.gz', 'special.eng.gz', 'words-english.gz'),
+        ('dutch', 'words.dutch.gz'),
+        ('finnish', 'finnish.gz', 'firstnames.finnish.gz', 'words.finnish.FAQ.gz'),
+        ('french', 'dico.gz'),
+        ('german', 'deutsch.dic.gz', 'germanl.gz', 'words.german.gz'),
+        ('hindi', 'hindu-names.gz'),
+        ('hungarian', 'hungarian.gz'),
+        ('italian', 'words.italian.gz'),
+        ('japanese', 'words.japanese.gz'),
+        ('latin', 'wordlist.aug.gz'),
+        ('literature', 'LCarrol.gz', 'Paradise.Lost.gz', 'aeneid.gz',
+         'arthur.gz', 'cartoon.gz', 'cartoons-olivier.gz', 'charlemagne.gz',
+         'fable.gz', 'iliad.gz', 'myths-legends.gz', 'odyssey.gz', 'sf.gz',
+         'shakespeare.gz', 'tolkien.words.gz'),
+        ('movieTV', 'Movies.gz', 'Python.gz', 'Trek.gz'),
+        ('music', 'music-classical.gz', 'music-country.gz', 'music-jazz.gz',
+         'music-other.gz', 'music-rock.gz', 'music-shows.gz',
+         'rock-groups.gz'),
+        ('names', 'ASSurnames.gz' 'Congress.gz', 'Family-Names.gz',
+         'Given-Names.gz', 'actor-givenname.gz', 'actor-surname.gz',
+         'cis-givenname.gz', 'cis-surname.gz', 'crl-names.gz', 'famous.gz',
+         'fast-names.gz', 'female-names-kantr.gz', 'female-names.gz',
+         'givennames-ol.gz', 'male-names.gz', 'movie-characters.gz',
+         'names.french.gz', 'names.hp.gz', 'other-names.gz',
+         'shakesp-names.gz', 'surnames-ol.gz', 'surnames.finnish.gz',
+         'usenet-names.gz'),
+        ('net', 'hosts-txt.gz', 'inet-machines.gz', 'usenet-loginids.gz',
+         'usenet-machines.gz', 'uunet-sites.gz'),
+        ('norwegian', 'words.norwegian.gz'),
+        ('places', 'Colleges.gz', 'US-counties.gz', 'World.factbook.gz',
+         'Zipcodes.gz', 'places.gz'),
+        ('polish', 'words.polish.gz'),
+        ('random', 'Ethnologue.gz', 'abbr.gz', 'chars.gz', 'dogs.gz',
+         'drugs.gz', 'junk.gz', 'numbers.gz', 'phrases.gz', 'sports.gz',
+         'statistics.gz'),
+        ('religion', 'Koran.gz', 'kjbible.gz', 'norse.gz'),
+        ('russian', 'russian.lst.gz', 'russian_words.koi8.gz'),
+        ('science', 'Acr-diagnosis.gz', 'Algae.gz', 'Bacteria.gz',
+         'Fungi.gz', 'Microalgae.gz', 'Viruses.gz', 'asteroids.gz',
+         'biology.gz', 'tech.gz'),
+        ('spanish', 'words.spanish.gz'),
+        ('swahili', 'swahili.gz'),
+        ('swedish', 'words.swedish.gz'),
+        ('turkish', 'turkish.dict.gz'),
+        ('yiddish', 'yiddish.gz'),
+        ('exit program', ),
+    ]
+
+    menu = ''
+    ll = len(arguments)
+    l = int(ll / 3)
+    for i in range(0, l + 1):
+        j = i
+        menu += '    %2s  %-17s' % (j + 1, arguments[j][0])
+        j += l + 1
+        if j < ll:
+            menu += ' %2s  %-17s' % (j + 1, arguments[j][0])
+        j += l + 1
+        if j < ll:
+            menu += ' %2s  %-17s' % (j + 1, arguments[j][0])
+        menu += '\n'
+    print("  Choose the section you want to download:\n")
+    print(menu)
+    print("  Files will be downloaded from %s repository\n" % FTP_CONFIG['name'])
+    print("  Tip: After downloading wordlist, you can improve it with -w option\n")
+
+    def _validate(x):
+        x = int(x) - 1
+        if 0 <= x < ll:
+            return x
+        raise ValueError()
+
+    option = input_text("Enter number: ", validate=_validate, error_msg="Invalid choice.")
+
+    if option == ll - 1:
+        error('Leaving.')
+        sys.exit()
 
     download_ftp_files(*(arguments[option]))
 
