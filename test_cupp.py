@@ -120,7 +120,6 @@ class TestCupp3(unittest.TestCase):
         copyfile('cupp.cfg', tempfile_path)
 
         config = {
-            'alectourl': 'http://www.helith.net/projects/alecto/alectodb.csv.gz',
             'chars': ['!', '@', "'#'", '$', '%', '&', '*'],
             'numfrom': 0,
             'numto': 100,
@@ -264,40 +263,26 @@ class TestCupp3(unittest.TestCase):
         self.assertEqual(args.config, 'foo/bar.cfg')
         args = parser.parse_args(['-l', '--config', 'bar/foo.cfg'])
         self.assertEqual(args.config, 'bar/foo.cfg')
-        self.assertFalse(args.alecto)
         self.assertTrue(args.download_wordlist)
         self.assertFalse(args.improve)
         self.assertFalse(args.interactive)
         self.assertFalse(args.quiet)
-        self.assertFalse(args.version)
-
-        args = parser.parse_args(['-a'])
-        self.assertFalse(args.quiet)
-        args = parser.parse_args(['-a', '--quiet'])
-        self.assertIsNone(args.config)
-        self.assertTrue(args.alecto)
-        self.assertFalse(args.download_wordlist)
-        self.assertFalse(args.improve)
-        self.assertFalse(args.interactive)
-        self.assertTrue(args.quiet)
         self.assertFalse(args.version)
 
         args = parser.parse_args(['-l'])
         self.assertFalse(args.quiet)
         args = parser.parse_args(['-l', '-q'])
         self.assertIsNone(args.config)
-        self.assertFalse(args.alecto)
         self.assertTrue(args.download_wordlist)
         self.assertFalse(args.improve)
         self.assertFalse(args.interactive)
         self.assertTrue(args.quiet)
         self.assertFalse(args.version)
 
-        args = parser.parse_args(['-a'])
+        args = parser.parse_args(['-w', 'dictionary.txt'])
         self.assertFalse(args.quiet)
         args = parser.parse_args(['-w', 'dictionary.txt', '--quiet'])
         self.assertIsNone(args.config)
-        self.assertFalse(args.alecto)
         self.assertFalse(args.download_wordlist)
         self.assertEqual(args.improve, 'dictionary.txt')
         self.assertFalse(args.interactive)
@@ -308,7 +293,6 @@ class TestCupp3(unittest.TestCase):
         self.assertFalse(args.quiet)
         args = parser.parse_args(['--interactive', '-q'])
         self.assertIsNone(args.config)
-        self.assertFalse(args.alecto)
         self.assertFalse(args.download_wordlist)
         self.assertFalse(args.improve)
         self.assertTrue(args.interactive)
@@ -319,7 +303,6 @@ class TestCupp3(unittest.TestCase):
         self.assertFalse(args.quiet)
         args = parser.parse_args(['-v', '--quiet'])
         self.assertIsNone(args.config)
-        self.assertFalse(args.alecto)
         self.assertFalse(args.download_wordlist)
         self.assertFalse(args.improve)
         self.assertFalse(args.interactive)

@@ -65,8 +65,6 @@ def main():
         interactive()
     elif args.download_wordlist:
         download_wordlist()
-    elif args.alecto:
-        alectodb_download()
     elif args.improve:
         improve_dictionary(args.improve)
 
@@ -175,11 +173,6 @@ def get_parser():
                        ' or WyD.pl output to make some pwnsauce')
     group.add_argument('-l', dest='download_wordlist', action='store_true',
                        help='Download huge wordlists from repository')
-    group.add_argument('-a', dest='alecto', action='store_true',
-                       help='Parse default usernames and passwords directly'
-                       ' from Alecto DB. Project Alecto uses purified'
-                       ' databases of Phenoelit and CIRT which were merged'
-                       ' and enhanced')
     group.add_argument('-v', '--version', action='store_true',
                        help='version of this program')
     parser.add_argument('-q', '--quiet', action='store_true',
@@ -240,7 +233,6 @@ def read_config(file_path=None):
         'wcto':      config.getint('nums', 'wcto'),
 
         'threshold': config.getint('nums', 'threshold'),
-        'alectourl': config.get('alecto', 'alectourl')
     })
 
     # 1337 mode configs, well you can add more lines if you add it to the
@@ -678,43 +670,6 @@ def download_wordlist():
         sys.exit()
 
     download_ftp_files(*(arguments[option]))
-
-
-def alectodb_download():
-    """Download csv from alectodb and save into local file as a list of
-    usernames and passwords"""
-    url = CONFIG['alectourl']
-    local_file_name = url.split('/')[-1]
-
-    info("Checking if alectodb is not present...")
-    if not os.path.isfile('alectodb.csv.gz'):
-        info("Downloading alectodb.csv.gz...")
-        web_file = urlopen(url)
-        local_file = open(local_file_name, 'w')
-        local_file.write(web_file.read())
-        web_file.close()
-        local_file.close()
-
-    f = gzip.open(local_file_name, 'rb')
-
-    data = csv.reader(f)
-
-    usernames = []
-    passwords = []
-    for row in data:
-        usernames.append(row[5])
-        passwords.append(row[6])
-    gus = sorted(set(usernames))
-    gpa = sorted(set(passwords))
-    f.close()
-
-    info("Exporting to alectodb-usernames.txt and alectodb-passwords.txt")
-    with open('alectodb-usernames.txt', 'w') as usernames_file:
-        usernames_file.write(os.linesep.join(gus))
-
-    with open('alectodb-passwords.txt', 'w') as passwords_file:
-        passwords_file.write(os.linesep.join(gpa))
-    success("Done.")
 
 
 def concats(seq, start, stop):
