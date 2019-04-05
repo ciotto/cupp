@@ -1,8 +1,12 @@
 # cupp.py - Common User Passwords Profiler
 
+## Rework (work in progress)
+
 [![Build Status](https://travis-ci.org/ciotto/cupp.svg?branch=dev)](https://travis-ci.org/ciotto/cupp)
 [![Codecov](https://codecov.io/gh/ciotto/cupp/branch/dev/graph/badge.svg)](https://codecov.io/gh/ciotto/cupp)
 [![PEP8](https://img.shields.io/badge/code%20style-pep8-orange.svg)](https://www.python.org/dev/peps/pep-0008/)
+
+I think that Cupp is a great project and I would to rework it in order to give it new functionalities.
  
 ## About
 
